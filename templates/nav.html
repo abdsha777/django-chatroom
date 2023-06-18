@@ -1,0 +1,7 @@
+<nav>
+    <h3><a href="/">Home</a></h3>
+    <form action="{% url 'home' %}" method="get">
+        <input type="text" name="q" placeholder="...Search Rooms">
+    </form>
+    <a href="{% url 'login' %}">Login</a>
+</nav>
