@@ -87,16 +87,31 @@ def room(request,pk):
     c = {'room':room,'roomMessages':roomMessages,'participants':participants}
     return render(request,"base/room.html",c)
 
+def userProfile(request,pk):
+    user = User.objects.get(id=pk)
+    rooms = user.room_set.all()
+    roomMessages = user.message_set.all()
+    topics = Topic.objects.all()
+    c={'user':user,'rooms':rooms,"room_messages":roomMessages,"topics":topics}
+    return render(request,'base/profile.html',c)
+
 @login_required(login_url='login')
 def createRoom(request):
+    form = RoomForm()
+    topics = Topic.objects.all()
     if request.method=="POST":
-        form = RoomForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+
+        Room.objects.create(
+            host=request.user,
+            topic = topic,
+            name = request.POST.get('name'),
+            description = request.POST.get('description')
+        )
+        return redirect('home')
     else:
-        form = RoomForm()
-        c={'form':form}
+        c={'form':form,'topics':topics}
         return render(request,'base/room_form.html',c)
 
 @login_required(login_url='login')
@@ -105,12 +120,15 @@ def updateRoom(request,pk):
     if request.user!=room.host:
         return HttpResponse('Your are not allowed Here')
     if request.method=="POST":
-        form = RoomForm(request.POST,instance=room)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+        room.name=request.POST.get('name')
+        room.topic = topic
+        room.description = request.POST.get('description')
+        room.save()
+        return redirect('home')
     form = RoomForm(instance=room)
-    c = {'form':form}
+    c = {'form':form,'room':room} 
     return render(request,'base/room_form.html',c)
 
 @login_required(login_url='login')
