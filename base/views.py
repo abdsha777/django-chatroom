@@ -3,11 +3,9 @@ from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
-from django.contrib.auth.forms import UserCreationForm
-from .models import Room,Topic,Message
-from .forms import RoomForm,UserForm
+from .models import Room,Topic,Message,User
+from .forms import RoomForm,UserForm,MyUserCreationForm
 
 # rooms=[
 #     {'id':1,'name':'learn pyth'},
@@ -34,7 +32,7 @@ def loginPage(request):
             login(request,user)
             return redirect('home')
         else:
-            message.error(request,"Username or password does not exist")
+            messages.error(request,"Username or password does not exist")
         
     c={'page':page}
     return render(request,'base/login_register.html',c)
@@ -45,10 +43,10 @@ def logoutUser(request):
     return redirect('home')
 
 def registerPage(request):
-    form = UserCreationForm()
+    form = MyUserCreationForm()
     c = {"form":form}
     if request.method=="POST":
-        form = UserCreationForm(request.POST)
+        form = MyUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.lower()
@@ -157,7 +155,7 @@ def deleteMessage(request,pk):
 def updateUser(request):
     user = request.user
     if request.method=="POST":
-        form = UserForm(request.POST,instance=user)
+        form = UserForm(request.POST,request.FILES,instance=user)
         if form.is_valid():
             form.save()
             return redirect('user-profile',pk=user.id)
